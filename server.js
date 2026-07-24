@@ -32,11 +32,23 @@ app.post('/api/registration', async (req, res) => {
   const transporter = nodemailer.createTransport({
     host: process.env.SMTP_HOST,
     port: Number(process.env.SMTP_PORT || 587),
-    secure: false,
+    secure: Number(process.env.SMTP_PORT) === 465, // true for port 465 (SMTPS)
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    tls: {
+      // Allow self-signed certificates (helpful on some hosts)
+      rejectUnauthorized: false,
+    },
+    connectionTimeout: 30_000,
+  })
+
+  // Debug log (without leaking credentials)
+  console.log('SMTP config:', {
+    host: process.env.SMTP_HOST,
+    port: process.env.SMTP_PORT,
+    user: process.env.EMAIL_USER,
   })
 
   try {
