@@ -90,8 +90,16 @@ app.post('/api/registration', async (req, res) => {
   }
 })
 
-app.get('/*', (req, res) => {
-  res.sendFile(path.join(clientPath, 'index.html'))
+// SPA fallback: jika bukan route API, kirimkan index.html
+app.use((req, res, next) => {
+  // lewati permintaan API
+  if (req.path.startsWith('/api')) return next()
+  // hanya tangani GET untuk SPA
+  if (req.method !== 'GET') return next()
+
+  res.sendFile(path.join(clientPath, 'index.html'), (err) => {
+    if (err) next(err)
+  })
 })
 
 app.listen(PORT, () => {
