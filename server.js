@@ -101,6 +101,7 @@ app.post('/api/registration', async (req, res) => {
 
     // Jika ada API key SendGrid, coba fallback ke SendGrid API
     if (process.env.SENDGRID_API_KEY) {
+      // Coba import resmi @sendgrid/mail bila tersedia
       try {
         const sgMailModule = await import('@sendgrid/mail')
         const sgMail = sgMailModule.default || sgMailModule
@@ -110,28 +111,58 @@ app.post('/api/registration', async (req, res) => {
           to: process.env.REGISTRATION_EMAIL,
           from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
           subject: `Pendaftaran Baru - ${namaAnak}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 16px; background: #f9fafb;">
-              <div style="background: linear-gradient(135deg, #22c55e, #15803d); color: white; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px;">
-                <h2 style="margin: 0; font-size: 22px;">Pendaftaran Baru TK Bhakti Pertiwi Cimalaka</h2>
-                <p style="margin: 8px 0 0; opacity: 0.95;">Permintaan pendaftaran anak baru telah masuk.</p>
-              </div>
-              <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden;">
-                <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 160px; color: #374151;">Nama Anak</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${namaAnak}</td></tr>
-                <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Usia Anak</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${usiaAnak} tahun</td></tr>
-                <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Nama Orang Tua</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${namaOrangTua}</td></tr>
-                <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Nomor HP</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${nomorHp}</td></tr>
-                <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Email</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${email}</td></tr>
-                <tr><td style="padding: 12px 16px; font-weight: bold; color: #374151;">Catatan</td><td style="padding: 12px 16px; color: #111827;">${catatan || '-'}</td></tr>
-              </table>
-            </div>
-          `,
+          html: `...`,
         })
 
         return res.json({ success: true, message: 'Pendaftaran berhasil dikirim via SendGrid.' })
       } catch (sgErr) {
-        console.error('SendGrid fallback failed:', sgErr)
-        return res.status(500).json({ message: 'Gagal mengirim email via SMTP dan SendGrid.' })
+        console.warn('SendGrid SDK not available or failed, will try HTTP API:', sgErr)
+        // Coba langsung ke HTTP API SendGrid tanpa dependency
+        try {
+          const sendgridPayload = {
+            personalizations: [{ to: [{ email: process.env.REGISTRATION_EMAIL }] }],
+            from: { email: process.env.EMAIL_FROM || process.env.EMAIL_USER },
+            subject: `Pendaftaran Baru - ${namaAnak}`,
+            content: [
+              { type: 'text/html', value: `
+                <div style="font-family: Arial, sans-serif; max-width: 640px; margin: 0 auto; padding: 24px; border: 1px solid #e5e7eb; border-radius: 16px; background: #f9fafb;">
+                  <div style="background: linear-gradient(135deg, #22c55e, #15803d); color: white; padding: 20px 24px; border-radius: 12px; margin-bottom: 20px;">
+                    <h2 style="margin: 0; font-size: 22px;">Pendaftaran Baru TK Bhakti Pertiwi Cimalaka</h2>
+                    <p style="margin: 8px 0 0; opacity: 0.95;">Permintaan pendaftaran anak baru telah masuk.</p>
+                  </div>
+                  <table style="width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden;">
+                    <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; width: 160px; color: #374151;">Nama Anak</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${namaAnak}</td></tr>
+                    <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Usia Anak</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${usiaAnak} tahun</td></tr>
+                    <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Nama Orang Tua</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${namaOrangTua}</td></tr>
+                    <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Nomor HP</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${nomorHp}</td></tr>
+                    <tr><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; font-weight: bold; color: #374151;">Email</td><td style="padding: 12px 16px; border-bottom: 1px solid #e5e7eb; color: #111827;">${email}</td></tr>
+                    <tr><td style="padding: 12px 16px; font-weight: bold; color: #374151;">Catatan</td><td style="padding: 12px 16px; color: #111827;">${catatan || '-'}</td></tr>
+                  </table>
+                </div>
+              ` },
+            ],
+          }
+
+          const sgRes = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${process.env.SENDGRID_API_KEY}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(sendgridPayload),
+          })
+
+          if (!sgRes.ok) {
+            const text = await sgRes.text()
+            console.error('SendGrid HTTP error:', sgRes.status, text)
+            return res.status(500).json({ message: 'Gagal mengirim email via SendGrid HTTP API.' })
+          }
+
+          return res.json({ success: true, message: 'Pendaftaran berhasil dikirim via SendGrid HTTP API.' })
+        } catch (httpErr) {
+          console.error('SendGrid HTTP fallback failed:', httpErr)
+          return res.status(500).json({ message: 'Gagal mengirim email via SMTP dan SendGrid.' })
+        }
       }
     }
 
