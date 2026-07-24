@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 import nodemailer from 'nodemailer'
 import dotenv from 'dotenv'
+import fs from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
 
@@ -13,13 +14,13 @@ const __dirname = path.dirname(__filename)
 const app = express()
 const PORT = process.env.PORT || 3000
 
+const buildPath = path.join(__dirname, 'dist')
+const publicPath = path.join(__dirname, 'public')
+const clientPath = fs.existsSync(buildPath) ? buildPath : publicPath
+
 app.use(cors())
 app.use(express.json())
-app.use(express.static(path.join(__dirname, 'public')))
-
-app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/index.html')
-})
+app.use(express.static(clientPath))
 
 app.post('/api/registration', async (req, res) => {
   const { namaAnak, usiaAnak, namaOrangTua, nomorHp, email, catatan } = req.body
@@ -87,6 +88,10 @@ app.post('/api/registration', async (req, res) => {
     console.error(error)
     return res.status(500).json({ message: 'Gagal mengirim email. Cek konfigurasi SMTP.' })
   }
+})
+
+app.get('*', (req, res) => {
+  res.sendFile(path.join(clientPath, 'index.html'))
 })
 
 app.listen(PORT, () => {
