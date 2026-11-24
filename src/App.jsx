@@ -2,6 +2,10 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import { validateRegistrationForm } from './utils/formValidation'
 
+const img = (id, w = 900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=80`
+
+const heroImage = img('1509062522246-3755977927d7')
+
 const navItems = [
   { id: 'home', label: 'Beranda' },
   { id: 'about', label: 'Tentang' },
@@ -17,6 +21,7 @@ const programs = [
     description:
       'Pembelajaran berbasis kompetensi dengan kurikulum yang relevan dan guru pendamping yang siap membantu setiap siswa berkembang.',
     features: ['Kurikulum Merdeka', 'Laboratorium modern', 'Bimbingan belajar personal'],
+    image: img('1544717297-fa95b6ee9643'),
   },
   {
     id: 'ekstrakurikuler',
@@ -24,6 +29,7 @@ const programs = [
     description:
       'Ruang bagi siswa untuk mengekspresikan bakat melalui organisasi, olahraga, seni, dan kegiatan sosial yang terarah.',
     features: ['Pramuka dan Paskibra', 'Tim olahraga', 'Karya seni dan teater'],
+    image: img('1577896851231-70ef18881754'),
   },
   {
     id: 'prestasi',
@@ -31,6 +37,7 @@ const programs = [
     description:
       'Dukungan penuh untuk meraih prestasi akademik maupun non-akademik dan mempersiapkan masa depan lewat magang.',
     features: ['Lomba tingkat daerah', 'Kunjungan industri', 'Mentoring karier'],
+    image: img('1571260899304-425eee4c7efc'),
   },
 ]
 
@@ -38,14 +45,17 @@ const highlights = [
   {
     title: 'Fasilitas Lengkap',
     text: 'Ruang kelas nyaman, perpustakaan digital, dan lapangan olahraga yang mendukung belajar aktif.',
+    image: img('1498243691581-b145c3f54a5a'),
   },
   {
     title: 'Lingkungan Aman',
     text: 'Sistem keamanan 24 jam dan suasana sekolah yang penuh kedisiplinan, semangat, dan rasa hormat.',
+    image: img('1529390079861-591de354faf5'),
   },
   {
     title: 'Kegiatan Inspiratif',
     text: 'Festival ilmiah, seminar alumni, dan kegiatan sosial rutin menumbuhkan jiwa kepemimpinan.',
+    image: img('1497486751825-1233686d5d80'),
   },
 ]
 
@@ -53,16 +63,19 @@ const testimonials = [
   {
     name: 'Nadia, Orang Tua Siswa',
     quote: 'Sekolah ini memberi perhatian penuh pada perkembangan anak, baik akademik maupun karakter.',
+    avatar: img('1438761681033-6461ffad8d80', 200),
   },
   {
     name: 'Rian, Siswa Kelas XII',
     quote: 'Saya merasa belajar di sini lebih bermakna karena ada banyak kesempatan mengembangkan bakat.',
+    avatar: img('1500648767791-00dcc994a43e', 200),
   },
 ]
 
 function App() {
   const [activeProgram, setActiveProgram] = useState(programs[0].id)
   const [activeSection, setActiveSection] = useState('home')
+  const [scrolled, setScrolled] = useState(false)
   const [formValues, setFormValues] = useState({
     namaAnak: '',
     usiaAnak: '',
@@ -77,28 +90,42 @@ function App() {
   const activeProgramData = programs.find((item) => item.id === activeProgram) ?? programs[0]
 
   useEffect(() => {
-    const sectionElements = navItems
-      .map((item) => document.getElementById(item.id))
-      .filter(Boolean)
+    const onScroll = () => setScrolled(window.scrollY > 16)
+    onScroll()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => window.removeEventListener('scroll', onScroll)
+  }, [])
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleSections = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)
+  useEffect(() => {
+    let ticking = false
 
-        if (visibleSections.length > 0) {
-          setActiveSection(visibleSections[0].target.id)
+    const update = () => {
+      const offset = 150
+      let current = navItems[0].id
+      for (const item of navItems) {
+        const el = document.getElementById(item.id)
+        if (el && el.getBoundingClientRect().top <= offset) {
+          current = item.id
         }
-      },
-      {
-        rootMargin: '-110px 0px -55% 0px',
-        threshold: [0.35, 0.5, 0.75],
       }
-    )
+      setActiveSection(current)
+      ticking = false
+    }
 
-    sectionElements.forEach((section) => observer.observe(section))
-    return () => observer.disconnect()
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true
+        window.requestAnimationFrame(update)
+      }
+    }
+
+    update()
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onScroll)
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onScroll)
+    }
   }, [])
 
   useEffect(() => {
@@ -108,10 +135,11 @@ function App() {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             entry.target.classList.add('show')
+            observer.unobserve(entry.target)
           }
         })
       },
-      { threshold: 0.2 }
+      { threshold: 0.15, rootMargin: '0px 0px -8% 0px' }
     )
 
     elements.forEach((el) => observer.observe(el))
@@ -161,7 +189,7 @@ function App() {
 
   return (
     <div className="page-shell">
-      <header className="topbar">
+      <header className={`topbar${scrolled ? ' scrolled' : ''}`}>
         <a className="brand" href="#home">
           <span className="brand-mark">TK</span>
           <span>TK Bhakti Pertiwi Cimalaka</span>
@@ -185,7 +213,7 @@ function App() {
       </header>
 
       <main>
-        <section id="home" className="hero-section fade-up">
+        <section id="home" className="hero-section">
           <div className="hero-copy fade-up">
             <p className="eyebrow">TK Bhakti Pertiwi Cimalaka</p>
             <h1>Membangun kecerdasan dan karakter anak sejak usia dini.</h1>
@@ -218,18 +246,23 @@ function App() {
             </div>
           </div>
 
-          <div className="hero-card fade-up" aria-label="Ringkasan sekolah">
-            <div className="hero-card-badge">2026</div>
-            <h2>Belajar dengan semangat, tumbuh dengan percaya diri</h2>
-            <p>
-              Dari kelas, laboratorium, hingga kegiatan sosial, setiap momen di sekolah kami dirancang untuk mengembangkan potensi terbaik siswa.
-            </p>
-            <ul>
-              <li>Lab komputer dan desain terbaru</li>
-              <li>Pembelajaran berbasis project</li>
-              <li>Guru berpengalaman dan suportif</li>
-            </ul>
-          </div>
+          <figure className="hero-visual fade-up">
+            <div className="hero-img-wrap">
+              <img
+                src={heroImage}
+                alt="Suasana belajar yang ceria dan hangat di TK Bhakti Pertiwi Cimalaka"
+                loading="eager"
+                fetchPriority="high"
+              />
+            </div>
+            <figcaption className="hero-img-caption">
+              <span className="hero-card-badge">2026</span>
+              <strong>Belajar dengan semangat, tumbuh dengan percaya diri.</strong>
+              <p>
+                Dari kelas, laboratorium, hingga kegiatan sosial, setiap momen dirancang untuk mengembangkan potensi terbaik siswa.
+              </p>
+            </figcaption>
+          </figure>
         </section>
 
         <section id="about" className="section fade-up">
@@ -238,16 +271,16 @@ function App() {
             <h2>Menghadirkan pendidikan yang seimbang antara ilmu, bakat, dan karakter.</h2>
           </div>
 
-          <div className="about-grid fade-up">
-            <article className="info-card">
+          <div className="about-grid">
+            <article className="info-card fade-up">
               <h3>Visi</h3>
               <p>Menjadi sekolah unggulan yang mencetak lulusan cerdas, inovatif, dan siap berkontribusi.</p>
             </article>
-            <article className="info-card">
+            <article className="info-card fade-up">
               <h3>Misi</h3>
               <p>Mengembangkan pembelajaran berkualitas, budaya literasi, serta jiwa kepemimpinan sejak dini.</p>
             </article>
-            <article className="info-card">
+            <article className="info-card fade-up">
               <h3>Nilai Kami</h3>
               <p>Disiplin, integritas, kolaborasi, dan semangat terus belajar menjadi fondasi utama kami.</p>
             </article>
@@ -273,8 +306,11 @@ function App() {
             ))}
           </div>
 
-          <div className="program-panel">
-            <div>
+          <div className="program-panel fade-up">
+            <div className="program-media">
+              <img src={activeProgramData.image} alt={activeProgramData.title} loading="lazy" />
+            </div>
+            <div className="program-body">
               <h3>{activeProgramData.title}</h3>
               <p>{activeProgramData.description}</p>
               <ul>
@@ -282,8 +318,6 @@ function App() {
                   <li key={feature}>{feature}</li>
                 ))}
               </ul>
-            </div>
-            <div className="program-side">
               <div className="mini-card">
                 <h4>Kenapa siswa suka?</h4>
                 <p>Belajar terasa menyenangkan karena ada ruang untuk eksplorasi, kolaborasi, dan tumbuh bersama.</p>
@@ -300,7 +334,10 @@ function App() {
 
           <div className="card-grid">
             {highlights.map((item) => (
-              <article className="info-card" key={item.title}>
+              <article className="info-card media-card fade-up" key={item.title}>
+                <div className="card-media">
+                  <img src={item.image} alt={item.title} loading="lazy" />
+                </div>
                 <h3>{item.title}</h3>
                 <p>{item.text}</p>
               </article>
@@ -316,9 +353,12 @@ function App() {
 
           <div className="testimonial-grid">
             {testimonials.map((item) => (
-              <blockquote className="testimonial-card" key={item.name}>
+              <blockquote className="testimonial-card fade-up" key={item.name}>
                 <p>“{item.quote}”</p>
-                <footer>{item.name}</footer>
+                <footer className="testimonial-foot">
+                  <img className="avatar" src={item.avatar} alt="" aria-hidden="true" loading="lazy" />
+                  <span>{item.name}</span>
+                </footer>
               </blockquote>
             ))}
           </div>
@@ -442,7 +482,46 @@ function App() {
         </section>
       </main>
 
-      <footer className="footer">© 2026 SMK Cendekia. Semua hak dilindungi.</footer>
+      <footer className="footer">
+        <div className="footer-inner">
+          <div className="footer-grid">
+            <div className="footer-brand">
+              <a className="brand" href="#home">
+                <span className="brand-mark">TK</span>
+                <span>TK Bhakti Pertiwi Cimalaka</span>
+              </a>
+              <p>
+                Pendidikan anak usia dini dengan suasana ceria, aman, dan penuh dukungan untuk tumbuh kembang buah hati Anda.
+              </p>
+            </div>
+
+            <nav className="footer-col" aria-label="Navigasi footer">
+              <h4>Navigasi</h4>
+              <ul>
+                {navItems.map((item) => (
+                  <li key={item.id}>
+                    <a href={`#${item.id}`}>{item.label}</a>
+                  </li>
+                ))}
+              </ul>
+            </nav>
+
+            <div className="footer-col">
+              <h4>Kontak</h4>
+              <ul>
+                <li>Cimalaka, Sumedang, Jawa Barat</li>
+                <li>
+                  <a href="#daftar">Formulir pendaftaran online</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="footer-bottom">
+            <p>© {new Date().getFullYear()} TK Bhakti Pertiwi Cimalaka. Semua hak dilindungi.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   )
 }

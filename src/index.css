@@ -1,9 +1,45 @@
 :root {
-  font-family: Inter, 'Segoe UI', Roboto, sans-serif;
-  line-height: 1.5;
+  --font-display: 'Fraunces', Georgia, 'Times New Roman', serif;
+  --font-body: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+
+  --bg: #fbf6ef;
+  --bg-soft: #f5eee3;
+  --surface: #ffffff;
+
+  --ink: #2b2118;
+  --ink-soft: #5c4f45;
+  --ink-faint: #8a7c6f;
+
+  --accent: #b4552d;
+  --accent-deep: #8e3e1e;
+  --accent-soft: #f2ded2;
+  --accent-ghost: rgba(180, 85, 45, 0.1);
+
+  --moss: #4a6741;
+  --moss-soft: #e7ede2;
+  --honey: #d98e32;
+  --honey-soft: #faead2;
+
+  --line: rgba(43, 33, 24, 0.1);
+  --line-strong: rgba(43, 33, 24, 0.16);
+
+  --shadow-sm: 0 4px 16px rgba(43, 33, 24, 0.06);
+  --shadow-md: 0 12px 32px rgba(43, 33, 24, 0.1);
+  --shadow-lg: 0 24px 60px rgba(43, 33, 24, 0.14);
+
+  --radius-sm: 0.75rem;
+  --radius-md: 1.25rem;
+  --radius-lg: 1.75rem;
+  --radius-pill: 999px;
+
+  --container: 1180px;
+  --section-y: clamp(3.5rem, 8vw, 6.5rem);
+
+  font-family: var(--font-body);
+  line-height: 1.6;
   font-weight: 400;
-  color: #0f172a;
-  background: #f8fafc;
+  color: var(--ink);
+  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -18,7 +54,10 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #f8fafc 0%, #eef6ff 100%);
+  background:
+    radial-gradient(60rem 40rem at 85% -10%, var(--honey-soft), transparent 60%),
+    radial-gradient(50rem 36rem at -10% 20%, var(--accent-soft), transparent 55%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-soft) 100%);
 }
 
 * {
@@ -27,4 +66,15 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  line-height: 1.15;
+  color: var(--ink);
 }
